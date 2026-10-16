@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Terrain model (no YOLO)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/terrain_model.py",
+      "args": ["data/frames", "results", "--no-yolo"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Terrain model (with YOLOE)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/terrain_model.py",
+      "args": ["data/frames", "results"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Extract frames from video",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/extract_frames.py",
+      "args": ["data/video/flight.mp4"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal"
+    }
+  ]
+}

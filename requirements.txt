@@ -1,0 +1,13 @@
+# core pipeline (enough for --no-yolo)
+numpy
+scipy
+scikit-image
+pillow
+matplotlib
+
+# YOLOE open-vocabulary detector (pulls in torch, large download)
+ultralytics
+
+# frame extraction
+opencv-python
+yt-dlp

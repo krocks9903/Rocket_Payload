@@ -1,0 +1,18 @@
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# big / regenerable inputs
+data/video/*
+data/frames/*
+!data/video/.gitkeep
+!data/frames/.gitkeep
+models/*
+!models/.gitkeep
+*.pt
+
+# os / editor
+.DS_Store
+Thumbs.db
