@@ -1,10 +1,42 @@
-# Rocket Payload – Terrain & Landing-Zone Analysis
+# Rocket Payload: Terrain and Landing-Zone Analysis
 
-We take frames from a rocket's downward-facing camera, label the terrain in each one, and pick the three safest spots to land.
+Computer vision that labels the terrain in a rocket's downward-facing camera frames, flags hazards, and ranks the three lowest-risk spots to land.
+
+> [!IMPORTANT]
+> **This is an offline prototype, not an autonomous landing system.** It analyses saved frames on a laptop after the flight. It does not run on flight hardware, does not steer anything, and has not been validated against ground truth. See [Known limitations](#known-limitations-and-next-steps).
+
+**FGCU Rocket Club senior project** · Python · scikit-image · Ultralytics YOLOE
+
+![Summary of all analysed frames](results/summary.png)
+
+## Overview
+
+A payload that wants to choose where to come down needs to answer one question from camera imagery: which patch of ground below is open, flat-looking and far from anything it could hit? This repository is our first pass at that question. It takes still frames, classifies every region of visible ground, adds keep-away buffers around hazards, and scores every possible landing circle.
 
 Test footage: the YouTube video **"High Power Rocket Launch – Darkstar – The Flash"**. We analysed 13 frames, from the pad (~3 ft) up to about 3,900 ft.
 
-![Summary of all analysed frames](results/summary.png)
+| | |
+|---|---|
+| **Input** | Still frames from a downward-facing rocket camera |
+| **Output** | Per-frame terrain map, risk heatmap, top 3 landing spots, and a `GOOD` / `OK` / `RISKY` verdict |
+| **Approach** | Hand-tuned colour and texture rules, classical filters, and a pretrained open-vocabulary detector used zero-shot |
+| **Trained on our data** | Nothing yet |
+| **Status** | Prototype, evaluated by eye on one flight video |
+
+```mermaid
+flowchart LR
+    A[Frame] --> B[Ignore mask<br/>HUD, rocket body]
+    B --> C[SLIC superpixels<br/>about 1,200 regions]
+    C --> D[Terrain class<br/>HSV + texture rules]
+    B --> E[Thin hazards<br/>Sato ridge, top-hat]
+    B --> F[YOLOE-11L-seg<br/>zero-shot prompts]
+    D --> G[Per-pixel risk map]
+    E --> G
+    F --> G
+    G --> H[Hazard buffers<br/>+ fisheye edge penalty]
+    H --> I[Score landing circles]
+    I --> J[Top 3 spots + verdict]
+```
 
 ---
 
@@ -94,11 +126,21 @@ Rocket_Payload/
 
 ## Setup
 
-Run these in the VS Code terminal (PowerShell):
+Requires a recent Python 3 (3.10 or newer recommended).
+
+Windows (PowerShell):
 
 ```powershell
 python -m venv .venv
 .venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+macOS / Linux:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -108,9 +150,9 @@ pip install -r requirements.txt
 
 ## Running
 
-**1. Get frames.** The 286 frames used for our results are already in `data/frames/` as `f001.jpg` to `f286.jpg`, in flight order. We sorted the original screenshots by reading the HUD altitude with OCR. [`data/frame_index.csv`](data/frame_index.csv) lists each frame's altitude and the screenshot it came from. Consecutive duplicate screenshots are kept, so the frame numbers match `results/`.
+**1. Get frames.** Our results used 286 frames named `f001.jpg` to `f286.jpg`, in flight order. The frames are git-ignored (17 MB), so a fresh clone has an empty `data/frames/` and you need to extract them as shown below. We sorted the original screenshots by reading the HUD altitude with OCR. [`data/frame_index.csv`](data/frame_index.csv) lists each frame's altitude and the screenshot it came from. Consecutive duplicate screenshots are kept, so the frame numbers match `results/`.
 
-To pull fresh frames from the video instead, put the video in `data/video/` and extract them:
+To pull frames from the video, put the video in `data/video/` and extract them:
 
 ```powershell
 yt-dlp -f "bv*[ext=mp4]" -o data/video/flight.mp4 <youtube-url>
@@ -152,3 +194,21 @@ All the settings are at the top of `src/terrain_model.py`:
 - **There is no ground truth**, so we can't measure accuracy yet. Labelling a few frames would let us report per-class IoU.
 - **Early frames include YouTube player graphics** (play button, player bar). Frames taken straight from the downloaded video won't have them.
 - **The ignore mask is fixed.** If the camera moves or the HUD changes, it needs to be rebuilt.
+
+## What would be needed for real landing guidance
+
+None of this exists in the repository today. It is listed so the gap is clear.
+
+- Running on the payload computer in real time instead of about 7 seconds per frame on a laptop
+- Camera calibration, fisheye correction and attitude data to turn pixels into ground coordinates
+- Labelled imagery and measured accuracy per terrain class
+- Testing across seasons, lighting and launch sites
+- A descent-control system that could act on a chosen spot
+
+## Team
+
+Built by the FGCU Rocket Club payload team as a senior project.
+
+## License
+
+No license file has been added yet. Until one is, the code is shared for viewing only.
