@@ -237,12 +237,18 @@ def render(a, lab, risk, spots, dets, title, out):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        raise SystemExit("usage: python src/terrain_model.py <frames_dir> <out_dir> [--no-yolo]")
     src, out = sys.argv[1], sys.argv[2]
+    frames = sorted(glob.glob(os.path.join(src, "*.jpg")))
+    if not frames:
+        # stop before summary.csv is rewritten with no rows
+        raise SystemExit(f"no .jpg frames in {src}; run scripts/extract_frames.py first (see README)")
     os.makedirs(out, exist_ok=True)
     ignore = np.load(os.path.join(ROOT, "data", "ignore_mask.npy"))
     det = None if "--no-yolo" in sys.argv else Detector()
     rows = []
-    for p in sorted(glob.glob(os.path.join(src, "*.jpg"))):
+    for p in frames:
         a, lab, risk, spots, dets = analyze(p, ignore, det)
         name = os.path.splitext(os.path.basename(p))[0]
         render(a, lab, risk, spots, dets, name, os.path.join(out, name + ".png"))
